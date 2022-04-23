@@ -6,6 +6,9 @@ There are a few ways to get the book, but I bought it [on Amazon](https://www.am
 This repo certainly isn't going to be pretty as I'm still learning the language,
 but hopefully things will look better as I progress father into the book.
 
+## Try it out!
+_TODO_
+
 ## Better resources than this repo if you're stuck
 If you would also like the get the CLI stuff working,
 [the system manual](https://isabelle.in.tum.de/doc/system.pdf) is likely the
