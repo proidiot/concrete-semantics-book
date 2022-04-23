@@ -1,0 +1,16 @@
+session ch2 = HOL +
+  options [document = pdf, document_output = "output"]
+  theories
+    "MyList"
+    "Exercise2"
+    "Exercise3"
+    "Exercise4"
+    "Exercise5"
+    "Exercise6"
+    "Exercise7"
+    "Exercise8"
+    "Exercise9"
+    "Exercise10"
+    "Exercise11"
+  document_files
+    "root.tex"

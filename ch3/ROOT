@@ -1,0 +1,6 @@
+session ch3 = HOL +
+  options [document = pdf, document_output = "output"]
+  theories
+    "Chapter3"
+  document_files
+    "root.tex"
