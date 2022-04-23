@@ -7,7 +7,18 @@ This repo certainly isn't going to be pretty as I'm still learning the language,
 but hopefully things will look better as I progress father into the book.
 
 ## Try it out!
-_TODO_
+It should be possible to open the various `foo.thy` files in the Isabelle IDE.
+
+To build the sessions and resulting PDFs from the comand line, set
+`ISABELLE=path/to/bin/isabelle` appropriately (wheether as an exported
+environemt variable or as an inline `make` variable) and run `make`.
+
+If you need to add a new theory file to an directory, unfortunately you
+currently need to manually edit the `ROOT` file. If you need to create a new
+directory, unfortunately you currently need to manually run
+`${ISABELLE} mkroot -A "${LATEX_AUTHOR}" -T "${LATEX_TITLE}"` from within the
+new directory and add the theory entries as described.
+_TODO_ Have the `Makefile` handle the `ROOT` files for us.
 
 ## Better resources than this repo if you're stuck
 If you would also like the get the CLI stuff working,
