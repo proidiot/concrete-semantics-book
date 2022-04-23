@@ -1,8 +1,10 @@
 # concrete-semantics-book
-Working on problems from Concrete Semantics by Nipkow and Klein.
+Working on problems from [Concrete Semantics by Nipkow and Klein](http://concrete-semantics.org/).
 
-This certainly isn't going to be pretty as I'm still learning the language, but
-hopefully things will look better as I progress father into the book.
+There are a few ways to get the book, but I bought it [on Amazon](https://www.amazon.com/Concrete-Semantics-Isabelle-Tobias-Nipkow/dp/3319105418/).
+
+This repo certainly isn't going to be pretty as I'm still learning the language,
+but hopefully things will look better as I progress father into the book.
 
 ## Better resources than this repo if you're stuck
 If you would also like the get the CLI stuff working,
