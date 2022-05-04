@@ -9,5 +9,6 @@ session ch4 = HOL +
   theories
     "Exercise1"
     "Exercise2"
+    "Exercise3"
   document_files
     "root.tex"
