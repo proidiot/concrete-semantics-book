@@ -12,7 +12,7 @@ proof (rule ccontr)
   hence "A y x" using TA by simp
   hence "x = y" using A and `A x y` by simp
   hence "T x y" using `T y x` by blast
-  thus "False" by (simp add: `\<not> T x y`)
+  thus "False" using `\<not> T x y` by simp
 qed
 
 end
