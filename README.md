@@ -21,6 +21,16 @@ new directory and add the theory entries as described.
 _TODO_ Have the `Makefile` handle the `ROOT` files for us.
 
 ## Better resources than this repo if you're stuck
+Once you get to part 2 of the book, the base definitions for the IMP language
+as described are [included in the Isabelle source code itself](https://github.com/isabelle-prover/mirror-isabelle/tree/master/src/HOL/IMP).
+During my own attempts to construct these definitions, there were some aspects
+that had been lost on me, such as [cleaning the search space](https://github.com/isabelle-prover/mirror-isabelle/blob/46ea8b8edd51a64f374206fa672d8ce26631ad78/src/HOL/IMP/Big_Step.thy#L62-L66)
+and [manipulating the schema](https://github.com/isabelle-prover/mirror-isabelle/blob/46ea8b8edd51a64f374206fa672d8ce26631ad78/src/HOL/IMP/Big_Step.thy#L73-L84).
+As such, if you too wish to attempt to construct these definitions for yourself
+as you proceed through the examples in order to maximize your understanding of
+the system, it would likely be worth digging through this official
+implementation definition if you get stuck.
+
 If you would also like the get the CLI stuff working,
 [the system manual](https://isabelle.in.tum.de/doc/system.pdf) is likely the
 correct place to look.
