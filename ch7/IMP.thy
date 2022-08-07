@@ -244,10 +244,24 @@ lemma "(WHILE b DO c) \<sim> (IF b THEN c ;; WHILE b DO c ELSE SKIP)"
   by blast
 
 (* A command in both if clauses is equivalent
-   to the command *)
+   to the command (from 7.2.4) *)
 lemma if_both_com_is_com:
   "(IF b THEN c ELSE c) \<sim> c"
   by blast
+
+(* Equivalent commands yeild equivalent while loops
+   (from 7.2.4) *)
+lemma while_equiv_complex:
+  "\<lbrakk> (WHILE b DO c,s) \<Rightarrow> t ; c \<sim> c' \<rbrakk>
+    \<Longrightarrow> (WHILE b DO c',s) \<Rightarrow> t"
+  apply (induction "WHILE b DO c" s t arbitrary: b c rule: big_step_induct)
+   apply blast
+  apply blast
+  done
+
+corollary while_equiv:
+  "c \<sim> c' \<Longrightarrow> ((WHILE b DO c) \<sim> (WHILE b DO c'))"
+  by (meson while_equiv_complex)
 
 (* Big-step equivalence is an equivalence relation *)
 theorem refl_equiv_c: "c \<sim> c" by auto
