@@ -2,35 +2,6 @@ theory Exercise3
   imports Exercise2
 begin
 
-(*
-fun isskip :: "com \<Rightarrow> bool" where
-"isskip (SKIP) = True" |
-"isskip (x ::= a) = False" |
-"isskip (c1 ;; c2) = ((isskip c1) \<and> (isskip c2))" |
-"isskip (IF b THEN c1 ELSE c2) = ((isskip c1) \<and> (isskip c2))" |
-"isskip (WHILE b DO c) = (isskip c)"
-
-fun deskip :: "com \<Rightarrow> com" where
-"deskip (SKIP) = (SKIP)" |
-"deskip (x ::= a) = (x ::= a)" |
-"deskip (c1 ;; c2)
-  = (if ((isskip c1) \<and> (isskip c2))
-      then (SKIP)
-      else if (isskip c1)
-      then (deskip c2)
-      else if (isskip c2)
-      then (deskip c1)
-      else ((deskip c1) ;; (deskip c2)))" |
-"deskip (IF b THEN c1 ELSE c2)
-  = (if ((isskip c1) \<and> (isskip c2))
-      then (SKIP)
-      else (IF b THEN (deskip c1) ELSE (deskip c2)))" |
-"deskip (WHILE b DO c)
-  = (if (isskip c)
-      then (SKIP)
-      else (WHILE b DO (deskip c)))"
-*)
-
 fun deskip :: "com \<Rightarrow> com" where
 "deskip (SKIP) = (SKIP)" |
 "deskip (x ::= a) = (x ::= a)" |
