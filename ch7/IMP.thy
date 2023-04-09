@@ -1270,7 +1270,7 @@ Stateful:
   "state_changes (c',s') (d,t) n
    \<and> (c,s) \<rightarrow> (c',s')
    \<and> s \<noteq> s'
-  \<Longrightarrow> state_changes (c,s) (d,t) (n+1)"
+  \<Longrightarrow> state_changes (c,s) (d,t) (Suc n)"
 
 lemma state_change_count_exists:
     "(c,s) \<rightarrow>* (d,t) \<Longrightarrow> \<exists>n. state_changes (c,s) (d,t) n"
@@ -1304,7 +1304,7 @@ next
       by (rule HOL.exI)
   next
     assume "s \<noteq> s'"
-    hence "state_changes (c,s) (d,t) (n+1)"
+    hence "state_changes (c,s) (d,t) (Suc n)"
       using
         state_changes.Stateful
         `state_changes (c',s') (d,t) n`
@@ -1355,7 +1355,7 @@ lemma state_change_count_prepend_ge:
   using
     state_changes.Stateful
     state_changes.Stateless
-  by (metis dual_order.eq_iff le_add1)
+  by (metis Suc_n_not_le_n nle_le)
 
 lemma zero_state_changes_impl_same:
     "state_changes (c,s) (d,t) 0 \<Longrightarrow> s = t"
@@ -1482,9 +1482,12 @@ proof -
       star.cases
       state_changes.simps
     by (smt (verit)
-        Pair_inject
-        add_eq_0_iff_both_eq_0
-        one_neq_zero)
+        One_nat_def
+        add_diff_cancel_right'
+        diff_add_zero
+        one_neq_zero
+        plus_1_eq_Suc
+        prod.inject)
   then obtain c' where
       "(c,s) \<rightarrow> (c',s) \<and> (c',s) \<rightarrow>* (d,s)"
     by (rule HOL.exE)
@@ -1508,23 +1511,6 @@ proof -
         `(c,s) \<rightarrow> (c',s) \<and> (c',s) \<rightarrow>* (d,s)`
         imp_deterministic_small_step
       by blast
-  next
-    case (Stateful ct st nt)
-    hence
-        "nt+1 = 0
-        \<and> state_changes (ct,st) (d,s) nt
-        \<and>  (c,s) \<rightarrow> (ct,st)
-        \<and> s \<noteq> st"
-      by simp
-    hence "nt+1 = 0"
-      by simp
-    have "nt+1 > 0"
-      by simp
-    hence "nt+1 \<noteq> 0"
-      by simp
-    thus "state_changes (c',s) (d,s) 0"
-      using `nt+1 = 0`
-      by contradiction
   qed
   hence "state_changes (c',s) (d,t) 0"
     using `s = t`
@@ -1537,14 +1523,123 @@ proof -
     by auto
 qed
 
-lemma state_change_count_append_ge:
-    "state_changes (c,s) (d',t') n \<and> (d',t') \<rightarrow> (d,t)
-    \<Longrightarrow> state_changes (c,s) (d,t) n' \<and> n' \<ge> n"
+lemma state_changes_stateless_tail:
+    "state_changes (c,s) (d',t) n \<and> (d',t) \<rightarrow> (d,t)
+    \<Longrightarrow> state_changes (c,s) (d,t) n"
+proof -
+  assume "state_changes (c,s) (d',t) n \<and> (d',t) \<rightarrow> (d,t)"
+  hence
+      "state_changes (c,s) (d',t) n"
+      "(d',t) \<rightarrow> (d,t)"
+    by simp+
+  thus "state_changes (c,s) (d,t) n"
+  proof (induction "(c,s)" "(d',t)" n
+         arbitrary: c s
+         rule: state_changes.induct)
+    case None
+    thus "state_changes (d',t) (d,t) 0"
+      using
+        state_changes.Stateless
+        state_changes.None
+      by blast
+  next
+    case (Stateless c' s n c)
+    hence
+        "state_changes (c',s) (d',t) n
+        \<and> (d',t) \<rightarrow> (d,t)"
+        "(c,s) \<rightarrow> (c',s)"
+      by simp+
+    hence "state_changes (c',s) (d,t) n"
+      using Stateless.hyps by blast
+    thus "state_changes (c,s) (d,t) n"
+      using
+        `(c,s) \<rightarrow> (c',s)`
+        state_changes.Stateless
+      by blast
+  next
+    case (Stateful c' s' n c s)
+    hence
+        "state_changes (c',s') (d',t) n
+        \<and> (d',t) \<rightarrow> (d,t)"
+        "(c,s) \<rightarrow> (c',s') \<and> s \<noteq> s'"
+      by simp+
+    hence "state_changes (c',s') (d,t) n"
+      using Stateful.hyps
+      by blast
+    thus "state_changes (c,s) (d,t) (Suc n)"
+      using `(c,s) \<rightarrow> (c',s') \<and> s \<noteq> s'`
+      using state_changes.Stateful
+      by simp
+  qed
+qed
+
+lemma state_changes_stateful_tail:
+    "state_changes (c,s) (d',t') n
+     \<and> (d',t') \<rightarrow> (d,t)
+     \<and> t' \<noteq> t
+    \<Longrightarrow> state_changes (c,s) (d,t) (Suc n)"
 proof -
   assume
-      "state_changes (c,s) (d',t') n
-      \<and> (d',t') \<rightarrow> (d,t)"
-  hence 
+    "state_changes (c,s) (d',t') n
+    \<and> (d',t') \<rightarrow> (d,t)
+    \<and> t' \<noteq> t"
+  hence
+      "state_changes (c,s) (d',t') n"
+      "(d',t') \<rightarrow> (d,t)"
+      "t' \<noteq> t"
+    by simp+
+  thus "state_changes (c,s) (d,t) (Suc n)"
+  proof (induction "(c,s)" "(d',t')" n
+         arbitrary: c s
+         rule: state_changes.induct)
+    case None
+    thus "state_changes (d',t') (d,t) (Suc 0)"
+      using
+        state_changes.Stateful
+        state_changes.None
+      by blast
+  next
+    case (Stateless c' s n c)
+    hence
+        "state_changes (c',s) (d',t') n
+        \<and> (d',t') \<rightarrow> (d,t)
+        \<and> t' \<noteq> t"
+        "(c,s) \<rightarrow> (c',s)"
+      by simp+
+    hence "state_changes (c',s) (d,t) (Suc n)"
+      using Stateless.hyps
+      by blast
+    thus "state_changes (c,s) (d,t) (Suc n)"
+      using
+        `(c,s) \<rightarrow> (c',s)`
+        state_changes.Stateless
+      by blast
+  next
+    case (Stateful c' s' n c s)
+    hence
+        "state_changes (c',s') (d',t') n
+        \<and> (d',t') \<rightarrow> (d,t)
+        \<and> t' \<noteq> t"
+        "(c,s) \<rightarrow> (c',s') \<and> s \<noteq> s'"
+      by simp+
+    hence "state_changes (c',s') (d,t) (Suc n)"
+      using Stateful.hyps
+      by simp
+    thus "state_changes (c,s) (d,t) (Suc (Suc n))"
+      using
+        `(c,s) \<rightarrow> (c',s') \<and> s \<noteq> s'`
+        state_changes.Stateful
+      by simp
+  qed
+qed
+
+lemma state_change_count_append_ge:
+    "state_changes (c,s) (d',t') n \<and> (d',t') \<rightarrow> (d,t)
+    \<Longrightarrow> \<exists>n'. state_changes (c,s) (d,t) n' \<and> n' \<ge> n"
+  using
+    state_changes_stateless_tail
+    state_changes_stateful_tail
+  by (metis Suc_n_not_le_n linorder_linear)
 
 corollary non_ident_zero_state_changes_impl_last:
     "state_changes (c,s) (d,t) 0 \<and> c \<noteq> d
