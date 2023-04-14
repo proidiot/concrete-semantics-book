@@ -1812,129 +1812,7 @@ lemma state_change_count_append_ge:
     state_changes_stateful_tail
   by (metis Suc_n_not_le_n linorder_linear)
 
-corollary non_ident_zero_state_changes_impl_last:
-    "state_changes (c,s) (d,t) 0 \<and> c \<noteq> d
-    \<Longrightarrow> \<exists>d'. state_changes (c,s) (d',t) 0
-        \<and> (d',t) \<rightarrow> (d,t)"
-proof -
-  assume "state_changes (c,s) (d,t) 0 \<and> c \<noteq> d"
-  hence
-      "state_changes (c,s) (d,t) 0"
-      "c \<noteq> d"
-    by simp+
-  hence "s = t"
-    using zero_state_changes_impl_same
-    by simp
-  have "(c,s) \<rightarrow> (d,t) \<or> \<not>(c,s) \<rightarrow> (d,t)"
-    by simp
-  thus
-      "\<exists>d'. state_changes (c,s) (d',t) 0
-      \<and> (d',t) \<rightarrow> (d,t)"
-  proof (elim disjE)
-    assume "(c,s) \<rightarrow> (d,t)"
-    have "state_changes (c,s) (c,s) 0"
-      by (rule state_changes.None)
-    hence "state_changes (c,s) (c,s) 0 \<and> (c,s) \<rightarrow> (d,t)"
-      using `(c,s) \<rightarrow> (d,t)`
-      by (rule HOL.conjI)
-    hence "state_changes (c,s) (c,t) 0 \<and> (c,t) \<rightarrow> (d,t)"
-      using `s = t`
-      by simp
-    thus
-        "\<exists>d'. state_changes (c,s) (d',t) 0
-        \<and> (d',t) \<rightarrow> (d,t)"
-      by auto
-  next
-    assume "\<not>(c,s) \<rightarrow> (d,t)"
-
-  hence "(c,s) \<rightarrow>* (d,t)"
-    using state_change_count_impl_leads_to
-    by simp
-  hence "star2 small_step (c,s) (d,t)"
-    by (rule star_impl_star2)
-  hence
-      "\<exists>d'. \<exists>t'.  star2 small_step (c,s) (d',t')
-      \<and> (d',t') \<rightarrow> (d,t)"
-  proof (cases rule: star2.cases)
-    case refl2
-    hence "c = d"
-      by simp
-    thus ?thesis
-      using `c \<noteq> d`
-      by contradiction
-  next
-    case (step2 y)
-    then obtain d' t' where
-        "star2 small_step (c,s) (d',t')"
-        "(d',t') \<rightarrow> (d,t)"
-      by (metis surj_pair)
-    thus
-        "\<exists>d'. \<exists>t'. star2 small_step (c,s) (d',t')
-        \<and> (d',t') \<rightarrow> (d,t)"
-      by auto
-  qed
-  hence "\<exists>d'. \<exists>t'. (c,s) \<rightarrow>* (d',t') \<and> (d',t') \<rightarrow> (d,t)"
-    using star2_impl_star
-    by metis
-  then obtain d' t' where
-      "(c,s) \<rightarrow>* (d',t') \<and> (d',t') \<rightarrow> (d,t)"
-    by auto
-  have "s = t"
-    using
-      `state_changes (c,s) (d,t) 0`
-      zero_state_changes_impl_same
-    by auto
-  have "t' = t"
-    sorry
-  hence "state_changes 
-
-
-
-
-lemma transitiv_zero_state_changes:
-    "state_changes (c,s) (c',s') 0
-    \<and> state_changes (c',s') (d,t) 0
-    \<Longrightarrow> state_changes (c,s) (d,t) 0"
-proof -
-  assume
-      "state_changes (c,s) (c',s') 0
-      \<and> state_changes (c',s') (d,t) 0"
-  hence
-      "state_changes (c,s) (c',s') 0"
-      "state_changes (c',s') (d,t) 0"
-    by simp+
-  hence
-      "s = s'"
-      "s' = t"
-    using zero_state_changes_impl_same
-    by simp+
-  hence "s = t"
-    by simp
-  have "(c,s) \<rightarrow>* (c',s')"
-    using `state_changes (c,s) (c',s') 0`
-    by (rule state_change_count_impl_leads_to)
-  hence "star2 small_step (c,s) (c',s')"
-    by (rule star_impl_star2)
-  thus "state_changes (c,s) (d,t) 0"
-  proof (induction "(c,s)" "(c',s')" rule: star2.induct)
-    case refl2
-    thus "state_changes (c,s) (d,t) 0"
-      using `state_changes (c',s') (d,t) 0`
-      by blast
-  next
-    case step2
-    then obtain c'' s'' where
-        "star2 small_step (c,s) (c'',s'')"
-        "(c'',s'') \<rightarrow> (c',s')"
-      by (metis surj_pair)
-    have "s'' = s' \<or> s'' \<noteq> s'"
-      by simp
-    thus "state_changes (c,s) (d,t) 0" sorry
-  qed
-qed
-
-
-lemma state_changes_transitivity:
+theorem state_changes_transitivity:
     "state_changes (c,s) (c',s') n1
      \<and> state_changes (c',s') (d,t) n2
     \<Longrightarrow> state_changes (c,s) (d,t) (n1+n2)"
@@ -1945,21 +1823,48 @@ proof -
   thus "state_changes (c,s) (d,t) (n1+n2)"
   proof (induction n2)
     case 0
-    hence
-        "state_changes (c,s) (c',s') n1"
-        "state_changes (c',s') (d,t) 0"
-      by auto
-    hence "s' = t"
-      using zero_state_changes_impl_same
+    hence "state_changes (c,s) (c',s') n1"
+      by (rule HOL.conjE)
+    hence "state_changes_tail (c,s) (c',s') n1"
+      using state_changes_tail_equiv
       by simp
-    hence "state_changes (c,s) (c',t) n1"
-      using `state_changes (c,s) (c',s') n1`
+    have "state_changes (c',s') (d,t) 0"
+      using 0
       by simp
-    thus "state_changes (c,s) (c',t) (n1+0)"
+    then obtain n2 where
+        "state_changes (c',s') (d,t) n2"
+        "n2 = 0"
+      by simp
+    hence "state_changes_tail (c,s) (d,t) n1"
+    proof (induction "(c',s')" "(d,t)" n2
+           arbitrary: d t
+           rule: state_changes.induct)
+      case None
+      thus "state_changes_tail (c,s) (c',s') n1"
+        using `state_changes_tail (c,s) (c',s') n1`
+        by simp
+    next
+      case (Stateless c3 d3 t3 n3)
+      hence
+          "state_changes (c3,s') (d3,t3) 0"
+          "(c',s') \<rightarrow> (c3,s')"
+        by simp+
+      hence "s' = t3"
+        using zero_state_changes_impl_same
+        by simp
+      thus "state_changes_tail (c,s) (d,t) n1" sorry
+    next
+      case (Stateful c' s' d t n)
+      thus "state_changes_tail (c,s) (d,t) n1" sorry
+    qed
+    hence "state_changes (c,s) (d,t) n1"
+      using state_changes_tail_equiv
+      by force
+    thus "state_changes (c,s) (d,t) (n1+0)"
       by simp
   next
-    case (Suc n1)
-    then show ?case sorry
+    case (Suc n2)
+    thus "state_changes (c,s) (d,t) (n1+(Suc n2))" sorry
   qed
 qed
 
