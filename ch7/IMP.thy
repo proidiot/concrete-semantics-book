@@ -1812,6 +1812,82 @@ lemma state_change_count_append_ge:
     state_changes_stateful_tail
   by (metis Suc_n_not_le_n linorder_linear)
 
+lemma state_changes_append_stateless:
+    "state_changes (c,s) (d',t') n
+    \<and> state_changes (d',t') (d,t) 0
+    \<Longrightarrow> state_changes (c,s) (d,t) n"
+proof -
+  assume
+    "state_changes (c,s) (d',t') n
+    \<and> state_changes (d',t') (d,t) 0"
+  hence "t' = t"
+    using
+      state_changes_tail_equiv
+      zero_state_changes_impl_same
+    by auto
+  hence
+      "state_changes_tail (c,s) (d',t) n"
+      "state_changes_tail (d',t) (d,t) 0"
+    using
+      `state_changes (c,s) (d',t') n
+      \<and> state_changes (d',t') (d,t) 0`
+      state_changes_tail_equiv
+    by simp+
+  hence tail_induct:
+      "\<forall>d2 d3. state_changes_tail (c,s) (d2,t) n
+      \<and> (d2,t) \<rightarrow> (d3,t)
+      \<longrightarrow> state_changes_tail (c,s) (d3,t) n"
+    using state_changes_tail.Stateless
+    by blast
+  obtain n2 where
+      "state_changes_tail (d',t) (d,t) n2"
+      "n2 = 0"
+    using `state_changes_tail (d',t) (d,t) 0`
+    by simp
+  hence "state_changes_tail (c,s) (d,t) n"
+  proof (induction
+         "(d',t)" "(d,t)" n2
+         rule: state_changes_tail.induct)
+    case None
+    then show ?case sorry
+  next
+    case (Stateless d3 n3)
+    hence
+        "state_changes (d',t) (d3,t) n3"
+        "n3 = 0"
+      using state_changes_tail_equiv
+      by simp+
+    hence "state_changes_tail (c,s) (d3,t) n"
+    proof (induction
+           "(d',t)" "(d3,t)" n3
+           rule: state_changes.induct)
+      case None
+      thus "state_changes_tail (c,s) (d3,t) n"
+        using `state_changes_tail (c,s) (d',t) n`
+        by simp
+    next
+      case (Stateless c')
+      hence "(d',t) \<rightarrow> (c',t)"
+        by simp
+      thus "state_changes_tail (c,s) (d3,t) n"
+        using
+          `state_changes_tail (c,s) (d',t) n`
+          state_changes_tail.Stateless
+        by try
+    next
+      case Stateful
+      then show ?case sorry
+    qed
+    thus "state_changes_tail (c,s) (d,t) n" sorry
+  next
+    case Stateful
+    then show ?case sorry
+  qed
+  thus "state_changes (c,s) (d,t) n"
+    using state_changes_tail_equiv
+    by simp
+qed
+
 theorem state_changes_transitivity:
     "state_changes (c,s) (c',s') n1
      \<and> state_changes (c',s') (d,t) n2
@@ -1837,22 +1913,23 @@ proof -
       by simp
     hence "state_changes_tail (c,s) (d,t) n1"
     proof (induction "(c',s')" "(d,t)" n2
-           arbitrary: d t
            rule: state_changes.induct)
       case None
-      thus "state_changes_tail (c,s) (c',s') n1"
+      thus "state_changes_tail (c,s) (d,t) n1"
         using `state_changes_tail (c,s) (c',s') n1`
         by simp
     next
-      case (Stateless c3 d3 t3 n3)
+      case (Stateless c3 n3)
       hence
-          "state_changes (c3,s') (d3,t3) 0"
+          "state_changes (c3,s') (d,t) 0"
           "(c',s') \<rightarrow> (c3,s')"
         by simp+
-      hence "s' = t3"
-        using zero_state_changes_impl_same
-        by simp
-      thus "state_changes_tail (c,s) (d,t) n1" sorry
+      hence "state_changes_tail (c,s) (c3,s') n1"
+        using
+          `state_changes_tail (c,s) (c',s') n1`
+          state_changes_tail.Stateless
+        by blast
+      thus "state_changes_tail (c,s) (d,t) n1" by try
     next
       case (Stateful c' s' d t n)
       thus "state_changes_tail (c,s) (d,t) n1" sorry
