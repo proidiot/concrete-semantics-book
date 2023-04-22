@@ -1543,14 +1543,14 @@ proof -
         state_changes.None
       by blast
   next
-    case (Stateless c' s n c)
+    case assms: (Stateless c' s n c)
     hence
         "state_changes (c',s) (d',t) n
         \<and> (d',t) \<rightarrow> (d,t)"
         "(c,s) \<rightarrow> (c',s)"
       by simp+
     hence "state_changes (c',s) (d,t) n"
-      using Stateless.hyps
+      using assms
       by simp
     thus "state_changes (c,s) (d,t) n"
       using
@@ -1558,14 +1558,14 @@ proof -
         state_changes.Stateless
       by blast
   next
-    case (Stateful c' s' n c s)
+    case assms: (Stateful c' s' n c s)
     hence
         "state_changes (c',s') (d',t) n
         \<and> (d',t) \<rightarrow> (d,t)"
         "(c,s) \<rightarrow> (c',s') \<and> s \<noteq> s'"
       by simp+
     hence "state_changes (c',s') (d,t) n"
-      using Stateful.hyps
+      using assms
       by blast
     thus "state_changes (c,s) (d,t) (Suc n)"
       using `(c,s) \<rightarrow> (c',s') \<and> s \<noteq> s'`
@@ -1616,7 +1616,7 @@ proof -
         state_changes.Stateless
       by blast
   next
-    case (Stateful c' s' n c s)
+    case assms: (Stateful c' s' n c s)
     hence
         "state_changes (c',s') (d',t') n
         \<and> (d',t') \<rightarrow> (d,t)
@@ -1624,7 +1624,7 @@ proof -
         "(c,s) \<rightarrow> (c',s') \<and> s \<noteq> s'"
       by simp+
     hence "state_changes (c',s') (d,t) (Suc n)"
-      using Stateful.hyps
+      using assms
       by simp
     thus "state_changes (c,s) (d,t) (Suc (Suc n))"
       using
@@ -1671,14 +1671,14 @@ proof -
         state_changes_tail.None
       by blast
   next
-    case (Stateless d' t n d)
+    case assms: (Stateless d' t n d)
     hence
         "state_changes_tail (c',s) (d',t) n
         \<and> (c,s) \<rightarrow> (c',s)"
         "(d',t) \<rightarrow> (d,t)"
       by simp+
     hence "state_changes_tail (c,s) (d',t) n"
-      using Stateless.hyps
+      using assms
       by blast
     thus "state_changes_tail (c,s) (d,t) n"
       using
@@ -1686,14 +1686,14 @@ proof -
         state_changes_tail.Stateless
       by blast
   next
-    case (Stateful d' t' n d t)
+    case assms: (Stateful d' t' n d t)
     hence
         "state_changes_tail (c',s) (d',t') n
         \<and> (c,s) \<rightarrow> (c',s)"
         "(d',t') \<rightarrow> (d,t) \<and> t' \<noteq> t"
       by simp+
     hence "state_changes_tail (c,s) (d',t') n"
-      using Stateful.hyps
+      using assms
       by blast
     thus "state_changes_tail (c,s) (d,t) (Suc n)"
       using
@@ -1820,72 +1820,67 @@ proof -
   assume
     "state_changes (c,s) (d',t') n
     \<and> state_changes (d',t') (d,t) 0"
-  hence "t' = t"
-    using
-      state_changes_tail_equiv
-      zero_state_changes_impl_same
-    by auto
   hence
-      "state_changes_tail (c,s) (d',t) n"
-      "state_changes_tail (d',t) (d,t) 0"
-    using
-      `state_changes (c,s) (d',t') n
-      \<and> state_changes (d',t') (d,t) 0`
-      state_changes_tail_equiv
-    by simp+
-  hence tail_induct:
-      "\<forall>d2 d3. state_changes_tail (c,s) (d2,t) n
-      \<and> (d2,t) \<rightarrow> (d3,t)
-      \<longrightarrow> state_changes_tail (c,s) (d3,t) n"
-    using state_changes_tail.Stateless
-    by blast
-  obtain n2 where
-      "state_changes_tail (d',t) (d,t) n2"
-      "n2 = 0"
-    using `state_changes_tail (d',t) (d,t) 0`
+      "state_changes (c,s) (d',t') n"
     by simp
-  hence "state_changes_tail (c,s) (d,t) n"
+  thus "state_changes (c,s) (d,t) n"
   proof (induction
-         "(d',t)" "(d,t)" n2
-         rule: state_changes_tail.induct)
+         "(c,s)" "(d',t')" n
+         arbitrary: c s
+         rule: state_changes.induct)
     case None
-    then show ?case sorry
+    thus "state_changes (d',t') (d,t) 0"
+      using
+        `state_changes (c,s) (d',t') n
+        \<and> state_changes (d',t') (d,t) 0`
+      by (rule HOL.conjE)
   next
-    case (Stateless d3 n3)
+    case (Stateless c' s n c)
     hence
-        "state_changes (d',t) (d3,t) n3"
-        "n3 = 0"
-      using state_changes_tail_equiv
-      by simp+
-    hence "state_changes_tail (c,s) (d3,t) n"
-    proof (induction
-           "(d',t)" "(d3,t)" n3
-           rule: state_changes.induct)
-      case None
-      thus "state_changes_tail (c,s) (d3,t) n"
-        using `state_changes_tail (c,s) (d',t) n`
-        by simp
-    next
-      case (Stateless c')
-      hence "(d',t) \<rightarrow> (c',t)"
-        by simp
-      thus "state_changes_tail (c,s) (d3,t) n"
-        using
-          `state_changes_tail (c,s) (d',t) n`
-          state_changes_tail.Stateless
-        by try
-    next
-      case Stateful
-      then show ?case sorry
-    qed
-    thus "state_changes_tail (c,s) (d,t) n" sorry
+        "state_changes (c',s) (d,t) n
+        \<and> (c,s) \<rightarrow> (c',s)"
+      by simp
+    thus "state_changes (c,s) (d,t) n"
+      by (rule state_changes.Stateless)
+  next
+    case (Stateful c' s' n c s)
+    hence
+        "state_changes (c',s') (d,t) n
+        \<and> (c,s) \<rightarrow> (c',s')
+        \<and> s \<noteq> s'"
+      by simp
+    thus "state_changes (c,s) (d,t) (Suc n)"
+      by (rule state_changes.Stateful)
+  qed
+qed
+
+theorem state_change_predecessor:
+    "state_changes (c,s) (d,t) (Suc n)
+    \<Longrightarrow> \<exists>d'. \<exists>d''. \<exists>t'. state_changes (c,s) (d',t') n
+    \<and> (d',t') \<rightarrow> (d'',t)
+    \<and> state_changes (d'',t) (d,t) 0"
+proof -
+  assume "state_changes (c,s) (d,t) (Suc n)"
+  hence "state_changes_tail (c,s) (d,t) (Suc n)"
+    using state_changes_tail_equiv
+    by simp
+  thus
+      "\<exists>d'. \<exists>d''. \<exists>t'. state_changes (c,s) (d',t') n
+      \<and> (d',t') \<rightarrow> (d'',t)
+      \<and> state_changes (d'',t) (d,t) 0"
+  proof (induction
+         "(c,s)" "(d,t)" "(Suc n)"
+         rule: state_changes_tail.induct)
+    case Stateless
+    thus
+        "\<exists>d'. \<exists>d''. \<exists>t'. state_changes (c,s) (d',t') n
+        \<and> (d',t') \<rightarrow> (d'',t)
+        \<and> state_changes (d'',t) (d,t) 0"
+      sorry
   next
     case Stateful
     then show ?case sorry
   qed
-  thus "state_changes (c,s) (d,t) n"
-    using state_changes_tail_equiv
-    by simp
 qed
 
 theorem state_changes_transitivity:
@@ -1897,51 +1892,30 @@ proof -
     "state_changes (c,s) (c',s') n1
      \<and> state_changes (c',s') (d,t) n2"
   thus "state_changes (c,s) (d,t) (n1+n2)"
-  proof (induction n2)
+  proof (induction n2 arbitrary: d t)
     case 0
-    hence "state_changes (c,s) (c',s') n1"
-      by (rule HOL.conjE)
-    hence "state_changes_tail (c,s) (c',s') n1"
-      using state_changes_tail_equiv
+    hence
+        "state_changes (c,s) (c',s') n1
+        \<and> state_changes (c',s') (d,t) 0"
       by simp
-    have "state_changes (c',s') (d,t) 0"
-      using 0
-      by simp
-    then obtain n2 where
-        "state_changes (c',s') (d,t) n2"
-        "n2 = 0"
-      by simp
-    hence "state_changes_tail (c,s) (d,t) n1"
-    proof (induction "(c',s')" "(d,t)" n2
-           rule: state_changes.induct)
-      case None
-      thus "state_changes_tail (c,s) (d,t) n1"
-        using `state_changes_tail (c,s) (c',s') n1`
-        by simp
-    next
-      case (Stateless c3 n3)
-      hence
-          "state_changes (c3,s') (d,t) 0"
-          "(c',s') \<rightarrow> (c3,s')"
-        by simp+
-      hence "state_changes_tail (c,s) (c3,s') n1"
-        using
-          `state_changes_tail (c,s) (c',s') n1`
-          state_changes_tail.Stateless
-        by blast
-      thus "state_changes_tail (c,s) (d,t) n1" by try
-    next
-      case (Stateful c' s' d t n)
-      thus "state_changes_tail (c,s) (d,t) n1" sorry
-    qed
     hence "state_changes (c,s) (d,t) n1"
-      using state_changes_tail_equiv
-      by force
+      by (rule state_changes_append_stateless)
     thus "state_changes (c,s) (d,t) (n1+0)"
       by simp
   next
-    case (Suc n2)
-    thus "state_changes (c,s) (d,t) (n1+(Suc n2))" sorry
+    case assms: (Suc n2)
+    then obtain d' t' where
+        "state_changes (c,s) (c',s') n1
+        \<and> state_changes (c',s') (d',t') n2
+        \<Longrightarrow> state_changes (c,s) (d',t') (n1+n2)"
+        "(d',t') \<rightarrow> (d,t)"
+        "t' \<noteq> t"
+      by try
+    have "state_changes (c',s') (d,t) (Suc n2)"
+      using assms
+      by simp
+    hence "state_changes (c',s') (d',t') n2" sorry
+    thus "state_changes (c,s) (d,t) (n1+Suc n2)" sorry
   qed
 qed
 
