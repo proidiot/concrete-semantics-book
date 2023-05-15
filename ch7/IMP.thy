@@ -1856,9 +1856,11 @@ qed
 
 theorem state_change_predecessor:
     "state_changes (c,s) (d,t) (Suc n)
-    \<Longrightarrow> \<exists>d'. \<exists>d''. \<exists>t'. state_changes (c,s) (d',t') n
+    \<Longrightarrow> \<exists>d'. \<exists>d''. \<exists>t'.
+    state_changes (c,s) (d',t') n
     \<and> (d',t') \<rightarrow> (d'',t)
-    \<and> state_changes (d'',t) (d,t) 0"
+    \<and> state_changes (d'',t) (d,t) 0
+    \<and> t' \<noteq> t"
 proof -
   assume "state_changes (c,s) (d,t) (Suc n)"
   hence "state_changes_tail (c,s) (d,t) (Suc n)"
@@ -1867,19 +1869,60 @@ proof -
   thus
       "\<exists>d'. \<exists>d''. \<exists>t'. state_changes (c,s) (d',t') n
       \<and> (d',t') \<rightarrow> (d'',t)
-      \<and> state_changes (d'',t) (d,t) 0"
-  proof (induction
-         "(c,s)" "(d,t)" "(Suc n)"
+      \<and> state_changes (d'',t) (d,t) 0
+      \<and> t' \<noteq> t"
+  proof (induction "(c,s)" "(d,t)" "(Suc n)"
+         arbitrary: d t n
          rule: state_changes_tail.induct)
-    case Stateless
+    case assms: (Stateless d' t d)
+    then obtain d2 d3 t2 where
+        eassms: "state_changes (c,s) (d2,t2) n
+        \<and> (d2,t2) \<rightarrow> (d3,t)
+        \<and> t2 \<noteq> t"
+        "state_changes (d3,t) (d',t) 0"
+      by auto
+    have "(d',t) \<rightarrow> (d,t)"
+      using assms
+      by simp
+    hence "state_changes (d3,t) (d,t) 0"
+      using
+        `state_changes (d3,t) (d',t) 0`
+        state_changes_stateless_tail
+      by blast
+    hence
+        "state_changes (c,s) (d2,t2) n
+        \<and> (d2,t2) \<rightarrow> (d3,t)
+        \<and> state_changes (d3,t) (d,t) 0
+        \<and> t2 \<noteq> t"
+      using eassms
+      by simp
     thus
         "\<exists>d'. \<exists>d''. \<exists>t'. state_changes (c,s) (d',t') n
         \<and> (d',t') \<rightarrow> (d'',t)
-        \<and> state_changes (d'',t) (d,t) 0"
-      sorry
+        \<and> state_changes (d'',t) (d,t) 0
+        \<and> t' \<noteq> t"
+      by auto
   next
-    case Stateful
-    then show ?case sorry
+    case assms: (Stateful d' t' n d t)
+    hence
+        eassms: "state_changes_tail (c,s) (d',t') n
+        \<and> (d',t') \<rightarrow> (d,t)
+        \<and> t' \<noteq> t"
+      by simp
+    have "state_changes (d,t) (d,t) 0"
+      using state_changes.None
+      by simp
+    hence
+        "state_changes (c,s) (d',t') n
+        \<and> (d',t') \<rightarrow> (d,t)
+        \<and> state_changes (d,t) (d,t) 0
+        \<and> t' \<noteq> t"
+      using
+        assms
+        state_changes_tail_equiv
+      by simp
+    thus ?case
+      by auto
   qed
 qed
 
@@ -1904,18 +1947,38 @@ proof -
       by simp
   next
     case assms: (Suc n2)
-    then obtain d' t' where
+    hence
         "state_changes (c,s) (c',s') n1
-        \<and> state_changes (c',s') (d',t') n2
-        \<Longrightarrow> state_changes (c,s) (d',t') (n1+n2)"
-        "(d',t') \<rightarrow> (d,t)"
-        "t' \<noteq> t"
-      by try
-    have "state_changes (c',s') (d,t) (Suc n2)"
+        \<and> state_changes (c',s') (d,t) (Suc n2)"
+      by simp
+    then obtain d2 d3 t2 where
+        "state_changes (c',s') (d2,t2) n2"
+        "(d2,t2) \<rightarrow> (d3,t)"
+        "state_changes (d3,t) (d,t) 0"
+        "t2 \<noteq> t"
+      using state_change_predecessor
+      by blast
+    hence
+        "state_changes (c,s) (c',s') n1
+        \<and> state_changes (c',s') (d2,t2) n2"
       using assms
       by simp
-    hence "state_changes (c',s') (d',t') n2" sorry
-    thus "state_changes (c,s) (d,t) (n1+Suc n2)" sorry
+    hence "state_changes (c,s) (d2,t2) (n1+n2)"
+      using assms
+      by simp
+    hence "state_changes (c,s) (d3,t) (Suc (n1+n2))"
+      using
+        `(d2,t2) \<rightarrow> (d3,t)`
+        `t2 \<noteq> t`
+        state_changes_stateful_tail
+      by blast
+    hence "state_changes (c,s) (d,t) (Suc (n1+n2))"
+      using
+        `state_changes (d3,t) (d,t) 0`
+        state_changes_append_stateless
+      by blast
+    thus "state_changes (c,s) (d,t) (n1+Suc n2)"
+      by simp
   qed
 qed
 
@@ -1932,19 +1995,30 @@ proof -
     case 0
     hence "s = t1 \<and> s = t2"
       using zero_state_changes_impl_same
-      by force
+      by auto
     thus "t1 = t2"
       by auto
   next
-    case (Suc n)
-    fix d1' t1' d2' t2'
-    have
-        "state_changes (c,s) (d1',t1') n
-        \<and> state_changes (c,s) (d2',t2') n
-        \<Longrightarrow> t1' = t2'"
-      using local.Suc
+    case assms: (Suc n)
+    hence
+        "state_changes (c,s) (d1,t1) (Suc n)
+        \<and> state_changes (c,s) (d2,t2) (Suc n)"
       by simp
-    thus "t1 = t2" sorry
+    then obtain d1' d1'' t1' d2' d2'' t2' where
+        "state_changes (c,s) (d1',t1') n"
+        "(d1',t1') \<rightarrow> (d1'',t1)"
+        "state_changes (d1'',t1) (d1,t1) 0"
+        "t1' \<noteq> t1"
+        "state_changes (c,s) (d2',t2') n"
+        "(d2',t2') \<rightarrow> (d2'',t2)"
+        "state_changes (d2'',t2) (d2,t2) 0"
+        "t2' \<noteq> t2"
+      using state_change_predecessor
+      by metis
+    hence "t1' = t2'"
+      using assms
+      by blast
+    thus "t1 = t2" by tr
   qed
 qed
 
