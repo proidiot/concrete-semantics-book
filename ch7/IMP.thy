@@ -722,7 +722,7 @@ next
       using `small_step_count (c,s) (c',s') 1`
       by blast
     thus "\<exists>n. small_step_count (c,s) (d,t) n"
-      by (rule HOL.exI)
+      by (rule exI)
   next
     assume "(c',s') \<noteq> (d,t)"
     then obtain n' where
@@ -743,7 +743,7 @@ next
         `small_step_count (c',s') (d,t) n'`
       by blast
     thus "\<exists>n. small_step_count (c,s) (d,t) n"
-      by (rule HOL.exI)
+      by (rule exI)
   qed
 qed
 
@@ -1410,7 +1410,7 @@ proof (induction rule: star_induct)
   hence "state_changes (c,s) (c,s) 0"
     by (rule state_changes.None)
   thus "\<exists>n. state_changes (c,s) (c,s) n"
-    by (rule HOL.exI)
+    by (rule exI)
 next
   case (step c s c' s' d t)
   hence
@@ -1432,7 +1432,7 @@ next
         `(c,s) \<rightarrow> (c',s')`
       by blast
     thus "\<exists>n. state_changes (c,s) (d,t) n"
-      by (rule HOL.exI)
+      by (rule exI)
   next
     assume "s \<noteq> s'"
     hence "state_changes (c,s) (d,t) (Suc n)"
@@ -1442,7 +1442,7 @@ next
         `(c,s) \<rightarrow> (c',s')`
       by blast
     thus "\<exists>n. state_changes (c,s) (d,t) n"
-      by (rule HOL.exI)
+      by (rule exI)
   qed
 qed
 
@@ -1526,7 +1526,7 @@ next
     using state_changes.None
     by simp
   thus "\<exists>d. state_changes (c,s) (d,t) 0"
-    by (rule HOL.exI)
+    by (rule exI)
 qed
 
 lemma nonzero_state_changes_impl_interior_change:
@@ -1621,7 +1621,7 @@ proof -
         prod.inject)
   then obtain c' where
       "(c,s) \<rightarrow> (c',s) \<and> (c',s) \<rightarrow>* (d,s)"
-    by (rule HOL.exE)
+    by (rule exE)
   have "state_changes (c,s) (d,s) 0"
     using
       `state_changes (c,s) (d,t) 0`
@@ -1964,7 +1964,7 @@ proof -
       using
         `state_changes (c,s) (d',t') n
         \<and> state_changes (d',t') (d,t) 0`
-      by (rule HOL.conjE)
+      by (rule conjE)
   next
     case (Stateless c' s n c)
     hence
@@ -2166,14 +2166,14 @@ next
   proof (rule ccontr)
     assume "\<not>(\<not>small_step_count (c,s) (d,t) (Suc n))"
     hence "small_step_count (c,s) (d,t) (Suc n)"
-      by (rule HOL.notnotD)
+      by (rule notnotD)
     hence
         "small_step_count (c,s) (d,t) (Suc n)
         \<and> (\<forall>n'. n' < (Suc n)
           \<longrightarrow> \<not>small_step_count (c,s) (d,t) n')"
       using
         `\<forall>n'. n' < (Suc n) \<longrightarrow> \<not>small_step_count (c,s) (d,t) n'`
-      by (rule HOL.conjI)
+      by (rule conjI)
     hence "smallest_step_count (c,s) (d,t) (Suc n)"
       by (rule smallest_step_count.Other)
     thus False
@@ -2359,7 +2359,7 @@ proof -
         by simp
       thus
           "\<exists>n'. n' \<le> n1 + n2 \<and> smallest_step_count (c1,s1) (c3,s3) n'"
-        by (rule HOL.exI)
+        by (rule exI)
     next
       assume
         "\<not>(\<exists>n'. n' < n1' + n2'
@@ -2424,7 +2424,7 @@ proof -
       thus
           "\<exists>n'. n' \<le> n1 + n2
           \<and> smallest_step_count (c1,s1) (c3,s3) n'"
-        by (rule HOL.exI)
+        by (rule exI)
       qed
   qed
 qed
@@ -2448,7 +2448,7 @@ proof -
     using `smallest_step_count (c,s) (d,t) n'`
     by simp
   thus "\<exists>n'. n' < nx \<and> smallest_step_count (c,s) (d,t) n'"
-    by (rule HOL.exI)
+    by (rule exI)
 qed
 
 lemma state_changes_impl_smallest_count_exists:
@@ -2463,11 +2463,40 @@ lemma state_changes_impl_smallest_count_exists:
 inductive smallest_state_changes ::
     "com \<times> state \<Rightarrow> com \<times> state \<Rightarrow> nat \<Rightarrow> bool"
   where
-Ident: "smallest_state_changes (c,s) (c',s) 0" |
+Ident: "smallest_state_changes (c,s) (c,s) 0" |
+Same:
+  "(c,s) \<rightarrow> (c',s)
+  \<Longrightarrow> smallest_state_changes (c,s) (c',s) 0" |
 Other:
   "state_changes (c,s) (d,t) n
   \<and> (\<forall>n'. n' < n \<longrightarrow> \<not>state_changes (c,s) (d,t) n')
   \<Longrightarrow> smallest_state_changes (c,s) (d,t) n"
+
+lemma smallest_state_changes_impl_state_changes:
+    "smallest_state_changes (c,s) (d,t) n
+    \<Longrightarrow> state_changes (c,s) (d,t) n"
+proof (induction rule: smallest_state_changes.induct)
+  case (Ident c s)
+  thus "state_changes (c,s) (c,s) 0"
+    by (rule state_changes.None)
+next
+  case (Same c s c')
+  hence "(c,s) \<rightarrow> (c',s)"
+    by simp
+  thus "state_changes (c,s) (c',s) 0"
+    using
+      state_changes.None
+      state_changes.Stateless
+    by blast
+next
+  case (Other c s d t n)
+  hence
+      "state_changes (c,s) (d,t) n
+      \<and> (\<forall>n'. n' < n \<longrightarrow> \<not>state_changes (c,s) (d,t) n')"
+    by simp
+  thus "state_changes (c,s) (d,t) n"
+    by (rule conjE)
+qed
 
 lemma state_changes_impl_smallest_changes_exists:
     "state_changes (c,s) (d,t) n
@@ -2484,7 +2513,7 @@ proof -
     hence "n \<le> n \<and> smallest_state_changes (c,s) (d,t) n"
       by simp
     thus "\<exists>n'. n' \<le> n \<and> smallest_state_changes (c,s) (d,t) n'"
-      by (rule HOL.exI)
+      by (rule exI)
   next
     assume "\<not>smallest_state_changes (c,s) (d,t) n"
     have "n > 0"
@@ -2500,8 +2529,9 @@ proof -
       hence "smallest_state_changes (c,s) (d,t) n"
         using
           `n = 0`
-          smallest_state_changes.Ident
-        by auto
+          `state_changes (c,s) (d,t) n`
+          smallest_state_changes.Other
+        by blast
       thus False
         using `\<not>smallest_state_changes (c,s) (d,t) n`
         by simp
@@ -2525,7 +2555,7 @@ proof -
       by (metis exists_least_iff)
     then obtain n' where
         "smallest_state_changes (c,s) (d,t) n'"
-      by (rule HOL.exE)
+      by (rule exE)
     hence "n' \<le> n''"
       using
         `state_changes (c,s) (d,t) n''`
@@ -2538,7 +2568,7 @@ proof -
       using `smallest_state_changes (c,s) (d,t) n'`
       by simp
     thus "\<exists>n'. n' \<le> n \<and> smallest_state_changes (c,s) (d,t) n'"
-      by (rule HOL.exI)
+      by (rule exI)
   qed
 qed
 
@@ -2561,47 +2591,118 @@ proof -
     using `smallest_state_changes (c,s) (d,t) n'`
     by simp
   thus "\<exists>n'. n' < nx \<and> smallest_state_changes (c,s) (d,t) n'"
-    by (rule HOL.exI)
+    by (rule exI)
+qed
+
+lemma smallest_step_equiv:
+    "smallest_step_count (c,s) (d,t) n1
+    \<and> smallest_step_count (c,s) (d,t) n2
+    \<Longrightarrow> n1 = n2"
+proof -
+  assume
+    "smallest_step_count (c,s) (d,t) n1
+    \<and> smallest_step_count (c,s) (d,t) n2"
+  hence
+      "smallest_step_count (c,s) (d,t) n1"
+      "smallest_step_count (c,s) (d,t) n2"
+    by simp+
+  hence
+      "small_step_count (c,s) (d,t) n1"
+      "small_step_count (c,s) (d,t) n2"
+    using
+      smallest_step_count.simps
+      zero_count_same
+    by force+
+  show "n1 = n2"
+  proof (rule ccontr)
+    assume "n1 \<noteq> n2"
+    hence "n1 > n2 \<or> n1 < n2"
+      by auto
+    thus False
+    proof (elim disjE)
+      assume "n1 > n2"
+      hence "n1 > 0"
+        by simp
+      hence
+          "small_step_count (c,s) (d,t) n1
+          \<and> (\<forall>n'. n' < n1 \<longrightarrow> \<not>small_step_count (c,s) (d,t) n')"
+        using
+          `smallest_step_count (c,s) (d,t) n1`
+          smallest_step_count.simps
+        by auto
+      hence "\<not>small_step_count (c,s) (d,t) n2"
+        using `n1 > n2`
+        by simp
+      thus False
+        using `small_step_count (c,s) (d,t) n2`
+        by contradiction
+    next
+      assume "n1 < n2"
+      hence "n2 > 0"
+        by simp
+      hence
+          "small_step_count (c,s) (d,t) n2
+          \<and> (\<forall>n'. n' < n2 \<longrightarrow> \<not>small_step_count (c,s) (d,t) n')"
+        using
+          `smallest_step_count (c,s) (d,t) n2`
+          smallest_step_count.simps
+        by auto
+      hence "\<not>small_step_count (c,s) (d,t) n1"
+        using `n1 < n2`
+        by simp
+      thus False
+        using `small_step_count (c,s) (d,t) n1`
+        by contradiction
+    qed
+  qed
 qed
 
 theorem prefix_smallest_step_change_equiv:
-    "(smallest_state_changes (c,s) (d,t) nc
-      \<and> (\<exists>nc'. nc' < nc \<and> state_changes (c,s) (d',t') nc'))
+    "(smallest_state_changes (c,s) (d,t) (Suc nc)
+      \<and> state_changes (c,s) (d',t') nc)
     = (smallest_step_count (c,s) (d,t) ns
-       \<and> (\<exists>ns'. ns' < ns \<and> small_step_count (c,s) (d',t') ns'))"
+       \<and> (\<exists>ns'. ns' < ns \<and> small_step_count (c,s) (d',t') ns')
+       \<and> t \<noteq> t')"
 proof
   assume
-    "smallest_state_changes (c,s) (d,t) nc
-    \<and> (\<exists>nc'. nc' < nc \<and> state_changes (c,s) (d',t') nc')"
+    "smallest_state_changes (c,s) (d,t) (Suc nc)
+    \<and> state_changes (c,s) (d',t') nc"
   hence
-      "smallest_state_changes (c,s) (d,t) nc"
-      "\<exists>nc'. nc' < nc \<and> state_changes (c,s) (d',t') nc'"
+      "smallest_state_changes (c,s) (d,t) (Suc nc)"
+      "state_changes (c,s) (d',t') nc"
     by simp+
+  have "nc < (Suc nc)"
+    by (rule Nat.lessI)
+  hence "(Suc nc) > 0"
+    by simp
   hence
-      "\<exists>nc'. nc' < nc
+      "\<exists>nc'. nc' < (Suc nc)
       \<and> smallest_state_changes (c,s) (d',t') nc'"
-    using smallest_changes_smaller by blast
+    using smallest_changes_smaller
+    by blast
   then obtain nc' where
-      "nc' < nc"
+      "nc' < (Suc nc)"
       "smallest_state_changes (c,s) (d',t') nc'"
     by auto
   hence "state_changes (c,s) (d',t') nc'"
-    by try
+    using smallest_state_changes_impl_state_changes
+    by simp
   hence "\<exists>ns'. small_step_count (c,s) (d',t') ns'"
     using
       leads_to_count
       state_change_count_impl_leads_to
-    by try
+    by simp
   hence "\<exists>ns'. smallest_step_count (c,s) (d',t') ns'"
     using small_step_impl_smallest_step_exists
     by blast
   then obtain ns' where
       "smallest_step_count (c,s) (d',t') ns'"
-    by (rule HOL.exE)
+    by (rule exE)
   thus
       "smallest_step_count (c,s) (d,t) ns
-      \<and> (\<exists>ns'. ns' < ns \<and> small_step_count (c,s) (d',t') ns')"
-    sorry
+      \<and> (\<exists>ns'. ns' < ns \<and> small_step_count (c,s) (d',t') ns')
+      \<and> t \<noteq> t'"
+    by try
 next
   assume
     "smallest_step_count (c,s) (d,t) ns
@@ -2650,7 +2751,7 @@ proof -
     by blast
   then obtain nc' where
       "state_changes (c,s) (d',t') nc'"
-    by (rule HOL.exE)
+    by (rule exE)
   hence "nc' \<le> nc \<or> nc' > nc"
     by auto
   thus "\<exists>nc'. nc' \<le> nc \<and> state_changes (c,s) (d',t') nc'"
@@ -2660,7 +2761,7 @@ proof -
       using `state_changes (c,s) (d',t') nc'`
       by simp
     thus "\<exists>nc'. nc' \<le> nc \<and> state_changes (c,s) (d',t') nc'"
-      by (rule HOL.exI)
+      by (rule exI)
   next
     assume "nc' > nc"
 
@@ -2680,7 +2781,7 @@ proof -
   then obtain n where
       smallest_step: "small_step_count (c,s) (d,s) n
       \<and> (\<forall>n'. n' < n \<longrightarrow> \<not> small_step_count (c,s) (d,s) n')"
-    by (rule HOL.exE)
+    by (rule exE)
   then obtain n' where
       "n \<ge> n' \<and> n' \<ge> 0"
     by auto
@@ -2887,7 +2988,7 @@ proof -
     by simp
   then obtain n' where
       "state_changes (c,s) (c',s') n'"
-    by (rule HOL.exE)
+    by (rule exE)
   have "\<exists>n''. state_changes (c',s') (d,t) n''"
     using
       `(c',s') \<rightarrow>* (d,t)`
@@ -2895,7 +2996,7 @@ proof -
     by simp
   then obtain n'' where
       "state_changes (c',s') (d,t) n''"
-    by (rule HOL.exE)
+    by (rule exE)
   obtain n where
       "n = n' + n''"
     by simp
@@ -3017,7 +3118,7 @@ proof
     by (rule state_change_count_exists)
   then obtain x where
       "state_changes (c,s) (SKIP,f) x"
-    by (rule HOL.exE)
+    by (rule exE)
   have
       "\<not>(\<exists>n. \<exists>d. \<exists>t.
       state_changes (c,s) (d,t) n
@@ -3061,7 +3162,7 @@ proof
   assume "\<exists>f. state_changes (c,s) (SKIP,f) x"
   then obtain f where
       "state_changes (c,s) (SKIP,f) x"
-    by (rule HOL.exE)
+    by (rule exE)
   have
       "\<not>(\<exists>n. \<exists>d. \<exists>t.
       state_changes (c,s) (d,t) n
@@ -3136,7 +3237,7 @@ proof -
       by (rule state_change_count_exists)
     then obtain x where
         "state_changes (c1,s) (SKIP,f) x"
-      by (rule HOL.exE)
+      by (rule exE)
     hence
         "\<not>(\<exists>x'. \<exists>d1'. \<exists>t1'.
            state_changes (c1,s) (d1',t1') x'

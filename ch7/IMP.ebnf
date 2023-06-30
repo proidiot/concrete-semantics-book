@@ -1,0 +1,37 @@
+arith_exp ::=
+	integer
+	| var_name
+	| arith_exp "+" arith_exp
+
+
+bool_exp ::=
+	"True"
+	| "False"
+	| "¬" bool_exp
+	| bool_exp "∧" bool_exp
+	| arith_exp "<" arith_exp
+
+
+com_exp ::=
+	"SKIP"
+	| var_name "::=" arith_exp
+	| com_exp ";;" com_exp
+	| "IF" bool_exp "THEN" com_exp "ELSE" com_exp
+	| "WHILE" bool_exp "DO" com_exp
+
+==========
+
+extras:
+
+Or(A:bool_exp, B:bool_exp):
+	// a.k.a. A ∨ B, A || B, etc.
+
+	¬ ((¬ A) ∧ (¬ B))
+	// i.e. ! (!A && !B)
+
+Equals(V:var_name, A:arith_exp):
+	// a.k.a. V == A
+
+	(¬ (V < A)) ∧ (¬ (A < V))
+	// i.e. (!(V < A)) && (!(A < V))
+
