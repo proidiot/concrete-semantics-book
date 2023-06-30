@@ -19,7 +19,9 @@ com_exp ::=
 	| "IF" bool_exp "THEN" com_exp "ELSE" com_exp
 	| "WHILE" bool_exp "DO" com_exp
 
+
 ==========
+
 
 extras:
 
@@ -34,4 +36,43 @@ Equals(V:var_name, A:arith_exp):
 
 	(¬ (V < A)) ∧ (¬ (A < V))
 	// i.e. (!(V < A)) && (!(A < V))
+
+
+==========
+
+
+Part 1: Are these two the same?
+
+1:	IF (B1 ∧  B2)
+	THEN C1
+	ELSE C2
+
+2:	IF B1
+	THEN IF B2
+	     THEN C1
+	     ELSE C2
+	ELSE C2
+
+
+
+Part 2: Are these two the same?
+
+1:	WHILE (B1 ∧  B2)
+	DO C1
+
+2:	WHILE B1
+	DO WHILE B2
+	   DO C1
+
+
+
+Part 3: Are these two the same?
+
+1:	WHILE (B1 ∨ B2)
+	DO C1
+
+2:	WHILE (B1 ∨ B2)
+	DO C1 ;;
+	   WHILE B1
+	   DO C1
 
